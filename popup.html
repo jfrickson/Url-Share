@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Link Sharing</title>
+	<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<h2>Link Sharing</h2>
+
+<!-- length Limit -->
+<div id="lengthLimit">
+	<label for="maxLength" class="main">Max. email length:</label>
+	<input class=main type="number" id="maxLength" step=10 min="500" max="5000" value="2000">
+</div>
+
+<!-- Recipients -->
+<label for="recipientSelect" class="main">Recipient:</label>
+<select id="recipientSelect" size="1">
+	<option value="">Type new email...</option>
+</select>
+<input id="recipientInput" placeholder="email@example.com">
+<button id="addRecipient">Add</button>
+<button id="removeRecipient">Remove</button>
+<button id="makeDefault">Make Default</button>
+
+<hr>
+
+<!-- Current Page -->
+<h3>Current Page</h3>
+<span id="currentPage"></span>
+<button id="addToQueue">Add to Queue</button>
+
+<!-- Queue -->
+<h3>Queued Links <span>(Drag or Use Buttons to Reorder)</span></h3>
+<ul id="queueList" class="draggable"></ul>
+<button id="clearQueue">Clear Queue</button><br>
+
+<hr>
+
+<!-- Subject -->
+<label for="subject" class="main">Subject:</label>
+<input class=main type="text" id="subject" value="Shared Links"><br>
+
+<!-- Custom Text -->
+<label for="prefix" class="main">Text Before Links:</label>
+<textarea id="prefix" rows="2"></textarea><br>
+<label for="suffix" class="main">Text After Links:</label>
+<textarea id="suffix" rows="2"></textarea><br>
+
+<hr>
+
+<!-- Send -->
+<div id="sendButton">
+	<button class="action" id="sendEmail">Compose Email</button>
+</div>
+
+<p id="status"></p>
+
+<!-- Over-Limit Dialog -->
+<div id="overLimitDialog" class="modal" style="display: none;">
+	<div class="modal-content">
+		<h2 id="exceed">URL Exceeds Length Limit</h2>
+		<p id="limitInfo"></p>
+
+		<hr>
+
+		<!-- Recipients -->
+		<h4>Recipients</h4>
+		<p id="dialogRecipients"></p>
+
+		<hr>
+
+		<!-- Prefix/Suffix -->
+		<h4>Prefix</h4>
+		<textarea id="dialogPrefix" rows="2"></textarea>
+		<h4>Suffix</h4>
+		<textarea id="dialogSuffix" rows="2"></textarea>
+
+		<hr>
+
+		<!-- Queue -->
+		<h3>Select Links <span>(Drag or Use Buttons to Reorder)</span></h3>
+		<label class="exceed" for="stripTitles">Strip URL Titles</label>
+		<input type="checkbox" class="exceed" id="stripTitles">
+		(Would save <span id="titleStripSaves"></span> characters)<br>
+
+		<ul id="dialogQueue" class="draggable"></ul>
+
+		<hr>
+
+		<!-- Split Emails -->
+		<h4>Split Emails</h4>
+		<p id="emailCount"></p>
+
+		<hr>
+
+		<!-- Actions -->
+		<div class="buttonBar">
+			<button class="action" id="sendSelected">Send Selected</button>
+			<button class="action" id="saveChanges">Save Changes</button>
+			<button class="action" id="cancelDialog">Cancel</button>
+		</div>
+	</div>
+</div>
+
+<!-- Confirmation Dialog -->
+<div id="confirmDialog" class="modal" style="display: none;">
+	<div class="modal-content">
+		<h3>Confirm Email</h3>
+		<p id="confirmMessage"></p>
+		<div class="buttonBar">
+			<button class="action" id="confirmSend">Send</button>
+			<button class="action" id="confirmSendAll">Send All</button>
+			<button class="action" id="confirmCancel">Cancel</button>
+		</div>
+	</div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
