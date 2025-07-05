@@ -1,3 +1,5 @@
+import { buildMailtoUrl, getStorageKeys, createNotification } from './utils.js';
+
 // Create context menu
 chrome.runtime.onInstalled.addListener(() => {
 	chrome.contextMenus.create({
@@ -28,6 +30,11 @@ chrome.runtime.onInstalled.addListener(() => {
 
 	});
 });
+
+function fetchAndUpdateBadge() {
+	getStorageKeys(['queue', 'recipients', 'prefix', 'suffix',
+					'maxLength', 'subject']).then(updateBadge);
+}
 
 // Function to update context menu items based on URL protocol
 function updateContextMenus(url) {
@@ -88,11 +95,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 			info.menuItemId === 'link-add-to-queue') &&
 			!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('ftp://') )
 	{
-		chrome.notifications.create({
-			type: 'basic',
-			iconUrl: 'icon48.png',
-			title: 'Invalid URL',
-			message: 'Only HTTP/HTTPS/FTP URLs can be added or sent.'
+		chrome.windows.create({
+			url: chrome.runtime.getURL('msgbox.html') +
+						'?t=err&subj=Invalid URL&' +
+						'msg=Only HTTP/HTTPS/FTP URLs can be added or sent.',
+			type: 'popup',
+			width: 400,
+			height: 225
 		});
 		return;
 	}
@@ -107,34 +116,27 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 			const subject = result.subject || 'Shared Links';
 
 			if (recipients.length === 0) {
-				chrome.notifications.create({
-					type: 'basic',
-					iconUrl: 'icon48.png',
-					title: 'No Recipients',
-					message: 'Select or type an email in the extension popup, ' +
-							'or add recipients to the saved list.'
+				chrome.storage.local.set({
+					pendingAction: {
+						type: 'send-now',
+						item,
+						menuItemId: info.menuItemId
+					}
+				}, () => {
+					// Open the popup
+					chrome.windows.create({
+						url: chrome.runtime.getURL('msgbox.html') + '?t=e',
+						type: 'popup',
+						width: 400,
+						height: 225
+					});
 				});
-				return;
-			}
 
-			const { url: mailtoUrl } = buildMailtoUrl(recipients, subject, prefix,
-													suffix, [item], false, false);
-			try {
+			} else {
+
+				const { url: mailtoUrl } = buildMailtoUrl(recipients, subject, prefix,
+														suffix, [item], false);
 				chrome.tabs.create({ url: mailtoUrl, active: false });
-				chrome.notifications.create({
-					type: 'basic',
-					iconUrl: 'icon48.png',
-					title: 'Email Opened',
-					message: `Opening email with "${item.title}"`
-				});
-			} catch (error) {
-				console.error('Failed to open mailto URL:', error);
-				chrome.notifications.create({
-					type: 'basic',
-					iconUrl: 'icon48.png',
-					title: 'Error',
-					message: 'Failed to open email client.'
-				});
 			}
 		});
 	} else if (info.menuItemId === 'page-add-to-queue' || info.menuItemId === 'link-add-to-queue') {
@@ -142,31 +144,45 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 			const queue = result.queue || [];
 			queue.push(item);
 			chrome.storage.local.set({ queue }, () => {
-				chrome.notifications.create({
-					type: 'basic',
-					iconUrl: 'icon48.png',
-					title: 'Link Added',
-					message: `Added "${item.title}" to queue`
-				});
+				createNotification('Link Added', `Added "${item.title}" to queue`);
+			});
+		});
+	}
+});
+
+// Handle the user input from msgbox.html
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+	if (message.type === 'userInput' && message.data) {
+		// Save the new recipient
+		chrome.storage.local.get(['recipients'], (result) => {
+			const recipients = Array.isArray(result.recipients) ? result.recipients : [];
+			recipients.push(message.data); // Add the new email
+			const pendingAction = message.pendingAction;
+
+			chrome.storage.local.set({ recipients }, () => {
+				if (pendingAction && pendingAction.type === 'send-now') {
+					// Retrieve settings and process the stored action
+					chrome.storage.local.get(['prefix', 'suffix', 'subject'], (settings) => {
+						const prefix = settings.prefix || '';
+						const suffix = settings.suffix || '';
+						const subject = settings.subject || 'Shared Links';
+						const { url: mailtoUrl } = buildMailtoUrl([message.data],
+							subject, prefix, suffix, [pendingAction.item], false);
+						chrome.tabs.create({ url: mailtoUrl, active: false });
+					});
+				}
 			});
 		});
 	}
 });
 
 // Initialize badge
-chrome.storage.local.get(['queue', 'recipients', 'prefix', 'suffix',
-						'maxLength', 'subject'], (result) => {
-	updateBadge(result);
-});
+fetchAndUpdateBadge();
 
 // Listen for storage changes
 chrome.storage.onChanged.addListener((changes, area) => {
-	if (area === 'local') {
-		chrome.storage.local.get(['queue', 'recipients', 'prefix', 'suffix',
-						'maxLength', 'subject'], (result) => {
-			updateBadge(result);
-		});
-	}
+	if (area === 'local')
+		fetchAndUpdateBadge();
 });
 
 function updateBadge(data) {
@@ -183,30 +199,10 @@ function updateBadge(data) {
 	}
 
 	// Calculate mailto URL length
-	const links = queue.map(item => `${item.title}\n${item.url}`).join('\n\n');
-	const body = `${prefix}\n\n${links}\n\n${suffix}`.trim();
-	const encodedSubject = encodeURIComponent(subject);
-	const encodedBody = encodeURIComponent(body);
-	const recipientList = recipients.join(',');
-	const mailtoUrl = `mailto:${recipientList}?subject=${encodedSubject}&body=${encodedBody}`;
+	const { url } = buildMailtoUrl(recipientList = recipients.join(','),
+			subject, prefix, suffix, queue, false);
 
-	const color = mailtoUrl.length > maxLength ? '#dc3545' : '#ffc107';
+	const color = url.length > maxLength ? '#dc3545' : '#ffc107';
 	chrome.action.setBadgeText({ text: queue.length.toString() });
 	chrome.action.setBadgeBackgroundColor({ color });
-}
-
-// Helper: Build mailto URL
-function buildMailtoUrl(recipients, subject, prefix, suffix, queue, stripTitles, stripNames) {
-	const currentRecipients = stripNames ? recipients.map(email => {
-		const match = email.match(/<(.+?)>|(.+)/);
-		return match ? (match[1] || match[2]) : email;
-	}) : recipients;
-	const links = queue.map(item => stripTitles ? item.url :
-							`${item.title}\n${item.url}`).join('\n\n');
-	const body = `${prefix}\n\n${links}\n\n${suffix}`.trim();
-	const encodedSubject = encodeURIComponent(subject);
-	const encodedBody = encodeURIComponent(body);
-	const recipientList = currentRecipients.join(',');
-	const url = `mailto:${recipientList}?subject=${encodedSubject}&body=${encodedBody}`;
-	return { url, body };
 }

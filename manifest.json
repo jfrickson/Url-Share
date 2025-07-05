@@ -1,6 +1,6 @@
 {
 	"manifest_version": 3,
-	"name": "Link Sharing With Queue",
+	"name": "URL Share With Queue",
 	"version": "1.0.1",
 	"description": "Share page URLs and titles via email with queuing",
 	"permissions": [
@@ -14,10 +14,17 @@
 		"default_popup": "popup.html"
 	},
 	"background": {
-		"service_worker": "background.js"
+		"service_worker": "background.js",
+		"type": "module"
 	},
 	"icons": {
 		"48": "icon48.png",
 		"128": "icon128.png"
-	}
+	},
+	"web_accessible_resources": [
+		{
+			"resources": ["utils.js", "overLimitDialog.js"],
+			"matches": ["<all_urls>"]
+		}
+	]
 }

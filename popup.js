@@ -1,3 +1,8 @@
+import { buildMailtoUrl, isValidEmail } from './utils.js';
+
+// Export helper functions needed by overLimitDialog.js
+export { calculateEmailsNeeded, showConfirmDialog, moveQueueItem, setupDragAndDrop };
+
 // Load saved data
 document.addEventListener('DOMContentLoaded', () => {
 	// Load length limit
@@ -72,7 +77,7 @@ document.getElementById('maxLength').addEventListener('change', (e) => {
 document.getElementById('addRecipient').addEventListener('click', () => {
 	const recipient = document.getElementById('recipientInput').value.trim();
 	const status = document.getElementById('status');
-	if (!recipient.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+	if (!isValidEmail(recipient)) {
 		status.textContent = 'Invalid email address';
 		status.style.color = 'red';
 		return;
@@ -129,7 +134,7 @@ document.getElementById('removeRecipient').addEventListener('click', () => {
 document.getElementById('makeDefault').addEventListener('click', () => {
 	const recipient = document.getElementById('recipientInput').value.trim();
 	const status = document.getElementById('status');
-	if (!recipient.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+	if (!isValidEmail(recipient)) {
 		status.textContent = 'Invalid email address';
 		status.style.color = 'red';
 		return;
@@ -191,11 +196,20 @@ document.getElementById('sendEmail').addEventListener('click', () => {
 		const subject = document.getElementById('subject').value;
 		const maxLength = result.maxLength || 2000;
 
-		// Save prefix/suffix/subject
 		chrome.storage.local.set({ prefix, suffix, subject });
 
-		if (!recipient.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-			status.textContent = 'Please enter a valid email address';
+		if (!isValidEmail(recipient)) {
+			status.textContent = 'Invalid email address';
+			status.style.color = 'red';
+			return;
+		}
+		if (queue.length === 0) {
+			status.textContent = 'Queue is empty';
+			status.color = 'red';
+			return;
+		}
+		if (!isValidEmail(recipient)) {
+			status.textContent = 'Invalid email address';
 			status.style.color = 'red';
 			return;
 		}
@@ -205,25 +219,20 @@ document.getElementById('sendEmail').addEventListener('click', () => {
 			return;
 		}
 
-		// Use the typed recipient as the sole recipient
 		const recipients = [recipient];
-
-		// Check URL length
 		const { url: mailtoUrl, body } = buildMailtoUrl(recipients, subject, prefix, suffix, queue, false, false);
 		if (mailtoUrl.length <= maxLength) {
-			// Within limit, send directly
 			window.location.href = mailtoUrl;
 			status.textContent = 'Opening email client...';
 			status.style.color = 'green';
-			chrome.storage.local.set({ queue: [] }, () => {
-				updateQueueList([]);
-			});
-		} else {
-			// Exceeds limit, show dialog
-			showOverLimitDialog(recipients, queue, prefix, suffix, subject, maxLength, body);
-		}
+			chrome.storage.local.set({ queue: [] }, () => { updateQueueList([]); });
+		} else
+			showOverLimitDialog(recipients, queue, prefix, suffix, subject, maxLength, body, updateQueueList);
 	});
 });
+
+
+
 
 // Over-limit dialog logic
 function showOverLimitDialog(recipients, queue, prefix, suffix, subject, maxLength, initialBody) {
@@ -322,6 +331,7 @@ function showOverLimitDialog(recipients, queue, prefix, suffix, subject, maxLeng
 
 	// Send selected
 	document.getElementById('sendSelected').onclick = async () => {
+		const status = document.getElementById('status');
 		const selectedIndices = Array.from(dialogQueue.querySelectorAll('input:checked'))
 									.map(cb => parseInt(cb.dataset.index));
 		const selectedQueue = selectedIndices.map(i => queue[i]);
@@ -333,6 +343,17 @@ function showOverLimitDialog(recipients, queue, prefix, suffix, subject, maxLeng
 
 		// Save updated prefix/suffix
 		chrome.storage.local.set({ prefix: currentPrefix, suffix: currentSuffix });
+
+		if (!isValidInputText(prefix)) {
+			status.textContent = 'Invalid prefix: contains disallowed characters or is too long';
+			status.style.color = 'red';
+			return;
+		}
+		if (!isValidInputText(suffix)) {
+			status.textContent = 'Invalid prefix: contains disallowed characters or is too long';
+			status.style.color = 'red';
+			return;
+		}
 
 		// Split emails if needed
 		const emails = calculateEmailsNeeded(
@@ -464,19 +485,6 @@ function showConfirmDialog(message, isLast, remaining) {
 	});
 }
 
-// Helper: Build mailto URL
-function buildMailtoUrl(recipients, subject, prefix, suffix, queue, stripTitles) {
-	const currentRecipients = recipients;
-	const links = queue.map(item => stripTitles ? item.url :
-							`${item.title}\n${item.url}`).join('\n\n');
-	const body = `${prefix}\n\n${links}\n\n${suffix}`.trim();
-	const encodedSubject = encodeURIComponent(subject);
-	const encodedBody = encodeURIComponent(body);
-	const recipientList = currentRecipients.join(',');
-	const url = `mailto:${recipientList}?subject=${encodedSubject}&body=${encodedBody}`;
-	return { url, body };
-}
-
 // Helper: Strip recipient name
 function stripRecipientName(email) {
 	const match = email.match(/<(.+?)>|(.+)/);
@@ -573,6 +581,15 @@ function setupDragAndDrop(container, queue, onUpdate) {
 			return closest;
 		}, { offset: Number.NEGATIVE_INFINITY }).element;
 	}
+}
+
+// Helper: Validate input (prefix and suffix)
+function isValidInputText(input, maxLength = 500) {
+	if (typeof input !== 'string') return false;
+	if (input.length > maxLength) return false;
+	// Disallow HTML tags, scripts, and control characters
+	const invalidPattern = /[<>{}\[\]\(\)\\/*`~|;]|script|[\u0000-\u001F\u007F-\u009F]/i;
+	return !invalidPattern.test(input);
 }
 
 // Update recipient select

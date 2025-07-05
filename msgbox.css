@@ -1,0 +1,52 @@
+body { width: 380px; padding: 5px; font-family: Arial, sans-serif; }
+
+h2, h3, h4 { font-size: 16px; margin: 5px 0 0; }
+h2 {
+	font-size: 1.75em;
+	text-align: center;
+	width: 94%;
+	background-color: black;
+	color: white;
+	margin: -10px 0 10px;
+	padding: 3px 0;
+}
+
+#subject {
+    font-size: 14px;
+    font-weight: bold;
+	width: 80%;
+    margin: 5px 0 10px 5px;
+}
+
+#message {
+    margin: 5px 0 5px 5px;
+}
+
+#subject { padding: 3px 5px; }
+.subj_warn { background-color: yellow; }
+.subj_error { background-color: darkred; color: white; }
+
+#userInput {
+	margin: 10px 30px;
+}
+
+.hidden { display: none; }
+
+#status {
+	width: 90%;
+	margin: 0 0 10px;
+	text-align: center;
+}
+
+div.buttonBar {
+	width: 90%;
+	margin: 10px, 20px;
+	text-align: right;
+	position:absolute;
+	bottom: 10px;
+}
+
+button.action {
+	font-size: 15px;
+	margin: 0 10px;
+}
