@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>URL Sharing</title>
+	<script src="msgbox.js" type="module"></script>
+	<link rel="stylesheet" href="msgbox.css">
+</head>
+<body>
+	<h2>URL Sharing</h2>
+	<div class="content-with-icon">
+		<img id="icon" class="message-icon" src="" alt="">
+		<div class="message-content">
+			<div id="subject">Loading ...</div>
+			<div id="message">Please wait a second!</div>
+
+			<label for="userInput" class="sr-only hidden">Enter your input here:</label>
+			<input type="text" id="userInput" class="hidden" placeholder="Enter your input here" />
+		</div>
+	</div>
+
+	<div id="status" aria-live="polite"></div>
+
+	<footer>
+		<div id="buttonBar" class="buttonBar">
+			<button class="action hidden" id="button1">Ok</button>
+			<button class="action hidden" id="button2"></button>
+			<button class="action hidden" id="button3"></button>
+		</div>
+	</footer>
+</body>
+</html>
