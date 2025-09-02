@@ -1,0 +1,67 @@
+body { width: 100%; padding: 0; margin: 0; font: 12px Arial, sans-serif; }
+
+h2, h3, h4 { font-size: 16px; margin: 5px 0 0; }
+
+h2 {
+	font-size: 1.75em;
+	text-align: center;
+	background-color: #0c4a6e;
+	color: #fef9c3;
+	margin: 0 0 10px;
+	padding: 4px 0;
+}
+
+#subject { font-size: 1.5em; font-weight: bold; margin: 0 0 10px 0; }
+
+#message { margin: 0; }
+
+.subj_warn { background-color: yellow; }
+
+.subj_error { background-color: darkred; color: white; }
+
+.content-with-icon {
+	display: flex;
+	align-items: center;
+	margin: 0 10px;
+	min-height: 80px;
+}
+
+.message-icon {
+	width: 48px;
+	height: 48px;
+	margin-right: 10px;
+	flex-shrink: 0;
+}
+
+.message-content { display: flex; flex-direction: column; flex-grow: 1; }
+
+#userInput { margin: 10px 0; width: 100%; box-sizing: border-box; }
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
+
+.hidden { display: none; }
+
+#status { position: absolute; bottom: 30px; text-align: center; width: 100%; }
+
+div.buttonBar { width: 100%; text-align: right; position: absolute; bottom: 5px; }
+
+button {
+	font-size: 12px;
+	font-weight: bold;
+	margin-right: 10px;
+	min-width: 50px;
+	padding: 4px 10px;
+}
+
+button:hover { background-color: #003491; }
+
+button.action { background-color: #004bcc; color: white; border: none; }

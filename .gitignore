@@ -1,2 +1,7 @@
+.codacy/
 .vscode/
 *.txt
+Url-Share.crx
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md

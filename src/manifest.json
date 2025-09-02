@@ -1,0 +1,55 @@
+{
+	"manifest_version": 3,
+	"name": "URL Share With Queue",
+	"version": "0.9.5",
+	"description": "Share page URLs and titles via email with queuing",
+	"permissions": [
+		"tabs",
+		"storage",
+		"activeTab",
+		"contextMenus",
+		"notifications"
+	],
+	"incognito": "spanning",
+	"browser_specific_settings": {
+		"gecko": {
+		"id": "url-share-with-queue@yourdomain.com",
+		"strict_min_version": "91.0"
+		}
+	},
+	"action": {
+		"default_popup": "popup.html"
+	},
+	"commands": {
+		"_execute_action": {
+			"suggested_key": {
+				"default": "Alt+Shift+E"
+			}
+		},
+		"queue-email": {
+			"suggested_key": {
+				"default": "Ctrl+Shift+Q",
+				"mac": "Command+Shift+Q"
+			},
+			"description": "Queues the currently active tab for email sharing"
+		},
+		"send-email": {
+			"suggested_key": {
+				"default": "Ctrl+Shift+E",
+				"mac": "Command+Shift+E"
+			},
+			"description": "Sends the currently active tab for email sharing"
+		}
+	},
+	"background": {
+		"service_worker": "background.js",
+		"type": "module"
+	},
+	"icons": {
+		"48": "assets/icon48.png",
+		"128": "assets/icon128.png"
+	},
+	"content_security_policy": {
+		"extension_pages": "default-src 'self'; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; font-src 'self'; media-src 'none'; frame-src 'none';"
+	}
+}
