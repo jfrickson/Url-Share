@@ -1,5 +1,7 @@
 # URL-Share With Queue
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/b2c9a17c465546b1a90db60ed39cf7dd)](https://app.codacy.com/gh/jfrickson/Url-Share?utm_source=github.com&utm_medium=referral&utm_content=jfrickson/Url-Share&utm_campaign=Badge_Grade)
+
 This is a browser extension to send links via email. Here are the main features:
 
 1. It uses your `mailto:` handler, so it's completely local to your machine,
